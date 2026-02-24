@@ -38,6 +38,8 @@ jobs:
         run: bundle exec jekyll build
         env:
           JEKYLL_ENV: production
+          LANG: C.UTF-8
+          LC_ALL: C.UTF-8
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
