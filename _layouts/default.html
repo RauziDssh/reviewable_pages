@@ -7,20 +7,13 @@
     <title>{{ page.title }} | {{ site.title }}</title>
     <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/style.css">
     <style>
-        /* コンテンツエリアの基本設定 */
         #content-area { position: relative; }
         
-        /* レビュー対象要素にマージンを作ってボタンのスペースを確保 */
-        .reviewable { 
-            position: relative; 
-            transition: background 0.2s;
-        }
-
-        /* レビュー用ボタンのスタイル（左側の余白に浮かせる） */
+        /* レビュー用ボタンの強制表示設定 */
         .review-btn {
-            display: none; 
+            display: none !important; /* 初期は非表示 */
             position: absolute;
-            left: -40px; 
+            left: -45px;
             top: 0;
             cursor: pointer;
             font-size: 20px;
@@ -32,8 +25,12 @@
             text-align: center;
             line-height: 32px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 100;
-            user-select: none;
+            z-index: 1000;
+        }
+
+        /* レビューモード有効時に display: block に上書き */
+        body.review-mode .review-btn {
+            display: block !important;
         }
         .review-btn:hover { transform: scale(1.2); background: #f0faff; }
 
