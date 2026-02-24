@@ -5,18 +5,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title }} | {{ site.title }}</title>
-    <!-- 絶対パスとrelative_urlを組み合わせて確実に読み込む -->
     <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/style.css">
     <style>
-        [data-line] { cursor: pointer; position: relative; transition: background-color 0.2s; }
-        [data-line]:hover { background-color: rgba(255, 255, 0, 0.2); }
-        [data-line]:hover::after {
-            content: "💬 Review"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-            font-size: 12px; color: #666; background: #eee;
-            padding: 2px 8px; border-radius: 4px; border: 1px solid #ccc;
+        /* レビュー用ボタンのスタイル */
+        .review-btn {
+            display: none; /* デフォルトは非表示 */
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 0 5px;
+            vertical-align: middle;
+            color: #666;
+            user-select: none;
         }
+        .review-btn:hover { background: #e0e0e0; color: #333; }
+
+        /* レビューモード有効時のスタイル */
+        body.review-mode .review-btn { display: inline-block; }
+        body.review-mode [data-line]:hover { background-color: rgba(255, 255, 0, 0.1); }
+
+        /* トグルスイッチのスタイル */
+        .mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #2ea44f; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* レビューボックス（ポップアップ） */
         #review-box {
-            display: none; position: absolute; z-index: 1000;
+            display: none; position: absolute; z-index: 3000;
             background: white; border: 1px solid #ccc; border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; width: 320px;
         }
@@ -25,23 +81,33 @@
         .btn { padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
         .btn-cancel { background: #f6f8fa; border: 1px solid #d0d7de; }
         .btn-primary { background: #2ea44f; color: white; border: 1px solid rgba(27,31,35,0.15); }
-        #review-quote { font-size: 0.85em; color: #555; margin-bottom: 10px; border-left: 4px solid #0969da; padding-left: 10px; font-style: italic; max-height: 60px; overflow: hidden; text-overflow: ellipsis; }
+        #review-quote { font-size: 0.85em; color: #555; margin-bottom: 10px; border-left: 4px solid #0969da; padding-left: 10px; font-style: italic; max-height: 60px; overflow: hidden; }
     </style>
 </head>
 <body>
+    <!-- モード切り替えトグル -->
+    <div class="mode-toggle">
+        <span>Review Mode</span>
+        <label class="switch">
+            <input type="checkbox" id="review-mode-checkbox">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
         <header style="border-bottom: 1px solid #eee; margin-bottom: 20px;">
             <h1><a href="{{ '/' | relative_url }}" style="text-decoration: none; color: #333;">{{ site.title }}</a></h1>
         </header>
         
-        <article>
+        <article id="content-area">
             {{ content }}
         </article>
     </div>
 
+    <!-- レビューポップアップ -->
     <div id="review-box">
         <div id="review-quote"></div>
-        <textarea id="review-text" placeholder="指摘内容を入力してください..."></textarea>
+        <textarea id="review-text" placeholder="指摘内容を入力..."></textarea>
         <div class="buttons">
             <button class="btn btn-cancel" onclick="closeReview()">キャンセル</button>
             <button class="btn btn-primary" onclick="submitReview()">Issueを作成</button>
