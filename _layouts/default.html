@@ -9,72 +9,89 @@
     <style>
         #content-area { position: relative; }
         
-        /* レビュー用ボタンの強制表示設定 */
+        /* レビュー用ボタン */
         .review-btn {
-            display: none !important; /* 初期は非表示 */
+            display: none !important;
             position: absolute;
             left: -45px;
             top: 0;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 18px;
             background: white;
             border: 1px solid #0969da;
             border-radius: 50%;
             width: 32px;
             height: 32px;
             text-align: center;
-            line-height: 32px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
+            line-height: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 100;
+            transition: all 0.2s;
+        }
+        .review-btn:hover { transform: scale(1.1); background: #f0faff; }
+        /* コメント済みの場合の色 */
+        .review-btn.has-comment {
+            background: #2ea44f;
+            border-color: #2ea44f;
+            color: white;
         }
 
-        /* レビューモード有効時に display: block に上書き */
-        body.review-mode .review-btn {
-            display: block !important;
-        }
-        .review-btn:hover { transform: scale(1.2); background: #f0faff; }
+        body.review-mode .review-btn { display: block !important; }
 
-        /* レビューモード有効時のみボタンを表示 */
-        body.review-mode .review-btn { display: block; }
-        body.review-mode .reviewable:hover { background-color: rgba(9, 105, 218, 0.05); }
-
-        /* トグルスイッチ（右上に固定） */
+        /* 右上のコントロールパネル */
         .mode-toggle {
             position: fixed; top: 20px; right: 20px;
             background: white; padding: 10px 20px; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 2000;
-            display: flex; align-items: center; gap: 12px; font-family: sans-serif;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 2000;
+            display: flex; align-items: center; gap: 15px; font-family: sans-serif;
         }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        
+        /* 一括投稿ボタン */
+        #batch-issue-btn {
+            display: none;
+            background: #2ea44f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #batch-issue-btn:hover { background: #2c974b; }
+        body.review-mode #batch-issue-btn { display: block; }
+
+        /* トグルスイッチ */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 24px;
+            background-color: #ccc; transition: .4s; border-radius: 20px;
         }
         .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px;
+            position: absolute; content: ""; height: 14px; width: 14px;
             left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
         }
-        input:checked + .slider { background-color: #2ea44f; }
+        input:checked + .slider { background-color: #0969da; }
         input:checked + .slider:before { transform: translateX(20px); }
 
         /* ポップアップ */
         #review-box {
             display: none; position: absolute; z-index: 3000;
             background: white; border: 1px solid #ccc; border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15); padding: 20px; width: 340px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2); padding: 15px; width: 300px;
         }
-        #review-box textarea { width: 100%; height: 120px; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical; }
-        .buttons { display: flex; justify-content: flex-end; gap: 10px; }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; }
-        .btn-cancel { background: #eee; }
-        .btn-primary { background: #2ea44f; color: white; }
-        #review-quote { font-size: 0.9em; color: #666; border-left: 4px solid #0969da; padding-left: 12px; font-style: italic; }
+        #review-box textarea { width: 100%; height: 100px; margin: 10px 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .buttons { display: flex; justify-content: flex-end; gap: 8px; }
+        .btn { padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid #ddd; }
+        .btn-save { background: #0969da; color: white; border: none; }
+        #review-quote { font-size: 0.85em; color: #666; border-left: 3px solid #0969da; padding-left: 10px; font-style: italic; overflow: hidden; max-height: 50px; }
     </style>
 </head>
 <body>
     <div class="mode-toggle">
-        <span style="font-size: 14px; font-weight: bold; color: #444;">Review Mode</span>
+        <button id="batch-issue-btn" onclick="submitBatchIssue()">Issueを作成 (<span id="comment-count">0</span>)</button>
+        <span style="font-size: 13px; font-weight: bold; color: #555;">Review Mode</span>
         <label class="switch">
             <input type="checkbox" id="review-mode-checkbox">
             <span class="slider"></span>
@@ -93,10 +110,10 @@
 
     <div id="review-box">
         <div id="review-quote"></div>
-        <textarea id="review-text" placeholder="指摘内容を入力してください..."></textarea>
+        <textarea id="review-text" placeholder="この箇所へのコメントを入力..."></textarea>
         <div class="buttons">
-            <button class="btn btn-cancel" onclick="closeReview()">キャンセル</button>
-            <button class="btn btn-primary" onclick="submitReview()">Issueを作成</button>
+            <button class="btn" onclick="closeReview()">閉じる</button>
+            <button class="btn btn-save" onclick="saveCurrentComment()">保存</button>
         </div>
     </div>
 

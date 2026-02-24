@@ -1,42 +1,41 @@
 // assets/js/reviewer.js
+// コメントの保存用オブジェクト: { line: { text: "...", quote: "...", path: "..." } }
+let lineComments = {};
+let currentActiveElement = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     const contentArea = document.getElementById('content-area');
     const toggle = document.getElementById('review-mode-checkbox');
-    const path = "index.md"; // 簡易化のため。本来はmetaタグ等から取得可能
+    const path = "index.md"; // 簡易化のため
 
     if (!contentArea || !toggle) return;
 
-    // 1. HTML内のコメント <!--L:n--> を探し、親要素を「レビュー可能」にする
+    // 1. HTMLコメント <!--L:n--> を探して親要素に属性付与 & ボタン設置
     const walker = document.createTreeWalker(contentArea, NodeFilter.SHOW_COMMENT, null, false);
     let node;
     const markers = [];
     while(node = walker.nextNode()) {
-        if (node.nodeValue.startsWith('L:')) {
-            markers.push(node);
-        }
+        if (node.nodeValue.startsWith('L:')) markers.push(node);
     }
 
     markers.forEach(comment => {
         const lineNum = comment.nodeValue.split(':')[1];
         const parent = comment.parentElement;
-        
         if (parent && !parent.hasAttribute('data-line')) {
             parent.setAttribute('data-line', lineNum);
             parent.setAttribute('data-path', path);
             parent.style.position = 'relative';
 
-            // レビューボタンを作成
             const btn = document.createElement('span');
             btn.className = 'review-btn';
             btn.innerHTML = '💬';
+            btn.dataset.line = lineNum;
             btn.onclick = (e) => {
                 e.stopPropagation();
                 openReviewBox(parent, e);
             };
-            // 先頭に挿入
             parent.prepend(btn);
         }
-        // マーカーコメントは削除
         comment.remove();
     });
 
@@ -52,41 +51,83 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function openReviewBox(el, e) {
+    currentActiveElement = el;
+    const line = el.getAttribute('data-line');
     const box = document.getElementById('review-box');
+    const textarea = document.getElementById('review-text');
     const quote = el.innerText.replace('💬', '').trim();
     
-    window.selectedElement = el;
     document.getElementById('review-quote').innerText = quote.substring(0, 100) + (quote.length > 100 ? "..." : "");
-    box.style.display = 'block';
     
-    // 位置合わせ（マウス位置）
-    box.style.left = Math.min(e.pageX, window.innerWidth - 360) + 'px';
+    // すでにコメントがあれば復元
+    textarea.value = lineComments[line] ? lineComments[line].text : "";
+    
+    box.style.display = 'block';
+    box.style.left = Math.min(e.pageX, window.innerWidth - 320) + 'px';
     box.style.top = e.pageY + 'px';
-    document.getElementById('review-text').focus();
+    textarea.focus();
 }
 
-function closeReview() {
-    const box = document.getElementById('review-box');
-    if (box) box.style.display = 'none';
-}
+// 現在開いている要素のコメントを保存
+function saveCurrentComment() {
+    const line = currentActiveElement.getAttribute('data-line');
+    const text = document.getElementById('review-text').value.trim();
+    const quote = currentActiveElement.innerText.replace('💬', '').trim();
+    const path = currentActiveElement.getAttribute('data-path');
 
-function submitReview() {
-    const el = window.selectedElement;
-    const line = el.getAttribute('data-line');
-    const path = el.getAttribute('data-path');
-    const comment = document.getElementById('review-text').value;
-    const repoUrl = window.siteConfig.repository_url;
+    if (text) {
+        lineComments[line] = { text, quote, path };
+        currentActiveElement.querySelector('.review-btn').classList.add('has-comment');
+    } else {
+        delete lineComments[line];
+        currentActiveElement.querySelector('.review-btn').classList.remove('has-comment');
+    }
 
-    if (!comment.trim()) return;
-
-    const body = `## Review Comment\n\n**Source:** ${repoUrl}/blob/main/${path}#L${line}\n\n### Quote\n> ${el.innerText.replace('💬', '').trim()}\n\n### Feedback\n${comment}`;
-    const url = `${repoUrl}/issues/new?title=Review:${path}(L${line})&body=${encodeURIComponent(body)}`;
-
-    window.open(url, '_blank');
+    updateCommentCount();
     closeReview();
 }
 
+function updateCommentCount() {
+    const count = Object.keys(lineComments).length;
+    document.getElementById('comment-count').innerText = count;
+}
+
+function closeReview() {
+    document.getElementById('review-box').style.display = 'none';
+}
+
+// すべてのコメントをまとめてIssue投稿
+function submitBatchIssue() {
+    const lines = Object.keys(lineComments);
+    if (lines.length === 0) {
+        alert("コメントがありません。");
+        return;
+    }
+
+    const repoUrl = window.siteConfig.repository_url;
+    let body = "## Unified Review Comments\n\n";
+
+    lines.sort((a, b) => parseInt(a) - parseInt(b)).forEach(line => {
+        const item = lineComments[line];
+        const permalink = `${repoUrl}/blob/main/${item.path}#L${line}`;
+        
+        body += `### Line ${line}\n`;
+        body += `**Source:** ${permalink}\n`;
+        body += `**Quote:**\n> ${item.quote}\n\n`;
+        body += `**Feedback:**\n${item.text}\n\n`;
+        body += `---\n\n`;
+    });
+
+    const title = `Batch Review: ${Object.keys(lineComments).length} comments`;
+    const url = `${repoUrl}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+
+    window.open(url, '_blank');
+}
+
+// 枠外クリック
 document.addEventListener('click', e => {
     const box = document.getElementById('review-box');
-    if (box && box.style.display === 'block' && !box.contains(e.target) && !e.target.classList.contains('review-btn')) closeReview();
+    if (box && box.style.display === 'block' && !box.contains(e.target) && !e.target.classList.contains('review-btn')) {
+        closeReview();
+    }
 });
