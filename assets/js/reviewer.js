@@ -6,7 +6,7 @@ let currentActiveElement = null;
 document.addEventListener('DOMContentLoaded', function() {
     const contentArea = document.getElementById('content-area');
     const toggle = document.getElementById('review-mode-checkbox');
-    const path = "index.md"; // 簡易化のため
+    const path = "index.md"; 
 
     if (!contentArea || !toggle) return;
 
@@ -22,10 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const lineNum = comment.nodeValue.split(':')[1].trim();
         const parent = comment.parentElement;
         if (parent && !parent.hasAttribute('data-line')) {
-            // 親要素または自身から data-path を取得（プラグインで付与済み）
             const itemPath = parent.getAttribute('data-path') || path;
-            
-            // 見出しや段落、リスト項目などのブロック要素を対象にする
             const blockElement = parent.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote') || parent;
             
             if (!blockElement.hasAttribute('data-line')) {
@@ -63,13 +60,12 @@ function openReviewBox(el, e) {
     const line = el.getAttribute('data-line');
     const box = document.getElementById('review-box');
     const textarea = document.getElementById('review-text');
-    // ボタン記号(💬)やコメントマーカー(<!--L:n-->)を除外
+    
+    // クリーンアップ処理
     const rawText = el.innerText || "";
-    const quote = rawText.replace(/💬|<!--L:\d+-->/g, '').trim();
+    const quote = rawText.replace(/💬/g, '').replace(/<!--L:\d+-->/g, '').trim();
     
     document.getElementById('review-quote').innerText = quote.substring(0, 100) + (quote.length > 100 ? "..." : "");
-    
-    // すでにコメントがあれば復元
     textarea.value = lineComments[line] ? lineComments[line].text : "";
     
     box.style.display = 'block';
@@ -78,12 +74,11 @@ function openReviewBox(el, e) {
     textarea.focus();
 }
 
-// 現在開いている要素のコメントを保存
 function saveCurrentComment() {
     const line = currentActiveElement.getAttribute('data-line');
     const text = document.getElementById('review-text').value.trim();
     const rawText = currentActiveElement.innerText || "";
-    const quote = rawText.replace(/💬|<!--L:\d+-->/g, '').trim();
+    const quote = rawText.replace(/💬/g, '').replace(/<!--L:\d+-->/g, '').trim();
     const path = currentActiveElement.getAttribute('data-path');
 
     if (text) {
@@ -104,10 +99,10 @@ function updateCommentCount() {
 }
 
 function closeReview() {
-    document.getElementById('review-box').style.display = 'none';
+    const box = document.getElementById('review-box');
+    if (box) box.style.display = 'none';
 }
 
-// すべてのコメントをまとめてIssue投稿
 function submitBatchIssue() {
     const lines = Object.keys(lineComments);
     if (lines.length === 0) {
@@ -121,7 +116,6 @@ function submitBatchIssue() {
 
     lines.sort((a, b) => parseInt(a) - parseInt(b)).forEach(line => {
         const item = lineComments[line];
-        // パーマリンク形式: repo/blob/SHA/path?plain=1#Lline
         const permalink = `${repoUrl}/blob/${commitSha}/${item.path}?plain=1#L${line}`;
         
         body += `### Line ${line}\n`;
@@ -137,7 +131,6 @@ function submitBatchIssue() {
     window.open(url, '_blank');
 }
 
-// 枠外クリック
 document.addEventListener('click', e => {
     const box = document.getElementById('review-box');
     if (box && box.style.display === 'block' && !box.contains(e.target) && !e.target.classList.contains('review-btn')) {
