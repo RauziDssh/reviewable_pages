@@ -10,31 +10,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!contentArea || !toggle) return;
 
-    // 1. HTMLコメント <!--L:n--> を探して親要素に属性付与 & ボタン設置
+    // 1. HTML内のコメント <!--L:n--> を探し、親要素を「レビュー可能」にする
     const walker = document.createTreeWalker(contentArea, NodeFilter.SHOW_COMMENT, null, false);
     let node;
     const markers = [];
     while(node = walker.nextNode()) {
-        if (node.nodeValue.startsWith('L:')) markers.push(node);
+        if (node.nodeValue.trim().startsWith('L:')) markers.push(node);
     }
 
     markers.forEach(comment => {
-        const lineNum = comment.nodeValue.split(':')[1];
+        const lineNum = comment.nodeValue.split(':')[1].trim();
         const parent = comment.parentElement;
         if (parent && !parent.hasAttribute('data-line')) {
-            parent.setAttribute('data-line', lineNum);
-            parent.setAttribute('data-path', path);
-            parent.style.position = 'relative';
+            // 見出しや段落、リスト項目などのブロック要素を対象にする
+            const blockElement = parent.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote') || parent;
+            
+            if (!blockElement.hasAttribute('data-line')) {
+                blockElement.setAttribute('data-line', lineNum);
+                blockElement.setAttribute('data-path', path);
+                blockElement.style.position = 'relative';
 
-            const btn = document.createElement('span');
-            btn.className = 'review-btn';
-            btn.innerHTML = '💬';
-            btn.dataset.line = lineNum;
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                openReviewBox(parent, e);
-            };
-            parent.prepend(btn);
+                const btn = document.createElement('span');
+                btn.className = 'review-btn';
+                btn.innerHTML = '💬';
+                btn.dataset.line = lineNum;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    openReviewBox(blockElement, e);
+                };
+                blockElement.prepend(btn);
+            }
         }
         comment.remove();
     });
