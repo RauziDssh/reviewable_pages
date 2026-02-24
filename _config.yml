@@ -1,13 +1,25 @@
 # _config.yml
 title: "Jekyll Review System"
+# 重要: 自分のGitHubユーザー名とリポジトリ名に合わせて変更してください
 baseurl: "" # Set to "/repo-name" if hosted on a subpath
 url: "https://rauzidssh.github.io/reviewable_pages/"
 repository_url: "https://github.com/RauzhDssh/reviewable_pages"
 
+# サイト構成
 markdown: kramdown
+highlighter: rouge
+lsi: false
+excerpt_separator: "\n\n"
+incremental: false
+
+# プラグイン設定 (GitHub Actionsでビルドするためカスタムプラグインが動きます)
 plugins:
   - jekyll-feed
+  - jekyll-seo-tag
 
 kramdown:
   input: GFM
   syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
