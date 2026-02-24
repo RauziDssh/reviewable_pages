@@ -116,7 +116,10 @@ function submitBatchIssue() {
 
     lines.sort((a, b) => parseInt(a) - parseInt(b)).forEach(line => {
         const item = lineComments[line];
-        const permalink = `${repoUrl}/blob/${commitSha}/${item.path}?plain=1#L${line}`;
+        const startLine = parseInt(line);
+        const endLine = startLine + 1;
+        // 範囲指定形式: #L開始行-L終了行
+        const permalink = `${repoUrl}/blob/${commitSha}/${item.path}?plain=1#L${startLine}-L${endLine}`;
         
         body += `### Line ${line}\n`;
         body += `${permalink}\n\n`;
