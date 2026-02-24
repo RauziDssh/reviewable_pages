@@ -1,8 +1,8 @@
 # _config.yml
 title: "Jekyll Review System"
 baseurl: "" # Set to "/repo-name" if hosted on a subpath
-url: "https://YOUR_USERNAME.github.io"
-repository_url: "https://github.com/YOUR_USERNAME/YOUR_REPO_NAME"
+url: "https://rauzidssh.github.io/reviewable_pages/"
+repository_url: "https://github.com/RauzhDssh/reviewable_pages"
 
 markdown: kramdown
 plugins:
