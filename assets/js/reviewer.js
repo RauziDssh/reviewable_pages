@@ -55,7 +55,9 @@ function openReviewBox(el, e) {
     const line = el.getAttribute('data-line');
     const box = document.getElementById('review-box');
     const textarea = document.getElementById('review-text');
-    const quote = el.innerText.replace('💬', '').trim();
+    // ボタン記号(💬)やコメントマーカー(<!--L:n-->)を除外
+    const rawText = el.innerText || "";
+    const quote = rawText.replace(/💬|<!--L:\d+-->/g, '').trim();
     
     document.getElementById('review-quote').innerText = quote.substring(0, 100) + (quote.length > 100 ? "..." : "");
     
@@ -72,7 +74,8 @@ function openReviewBox(el, e) {
 function saveCurrentComment() {
     const line = currentActiveElement.getAttribute('data-line');
     const text = document.getElementById('review-text').value.trim();
-    const quote = currentActiveElement.innerText.replace('💬', '').trim();
+    const rawText = currentActiveElement.innerText || "";
+    const quote = rawText.replace(/💬|<!--L:\d+-->/g, '').trim();
     const path = currentActiveElement.getAttribute('data-path');
 
     if (text) {
