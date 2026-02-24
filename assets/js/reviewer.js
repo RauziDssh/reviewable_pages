@@ -22,12 +22,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const lineNum = comment.nodeValue.split(':')[1].trim();
         const parent = comment.parentElement;
         if (parent && !parent.hasAttribute('data-line')) {
+            // 親要素または自身から data-path を取得（プラグインで付与済み）
+            const itemPath = parent.getAttribute('data-path') || path;
+            
             // 見出しや段落、リスト項目などのブロック要素を対象にする
             const blockElement = parent.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote') || parent;
             
             if (!blockElement.hasAttribute('data-line')) {
                 blockElement.setAttribute('data-line', lineNum);
-                blockElement.setAttribute('data-path', path);
+                blockElement.setAttribute('data-path', itemPath);
                 blockElement.style.position = 'relative';
 
                 const btn = document.createElement('span');
