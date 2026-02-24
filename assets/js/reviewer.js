@@ -7,47 +7,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!contentArea || !toggle) return;
 
-    // 1. レビューボタンをすべての対象要素に挿入
-    // data-line属性がある要素か、一般的なコンテンツ要素を対象
-    const targetTags = 'p, li, h1, h2, h3, h4, h5, h6, blockquote';
-    const reviewableElements = contentArea.querySelectorAll(targetTags);
+    // 1. data-line 属性を持つすべての要素にボタンを配置
+    const reviewableElements = contentArea.querySelectorAll('[data-line]');
     
     reviewableElements.forEach(el => {
-        // もしdata-lineがなかったとしても、行番号推定（暫定）のために表示
-        if (!el.getAttribute('data-line')) {
-            // 親や子にdata-lineがあれば継承
-            const nearestLine = el.closest('[data-line]') || el.querySelector('[data-line]');
-            if (nearestLine) {
-                el.setAttribute('data-line', nearestLine.getAttribute('data-line'));
-                el.setAttribute('data-path', nearestLine.getAttribute('data-path'));
-            } else {
-                // デバッグ用: data-lineが全く見つからない場合はボタンを出さない
-                return;
-            }
-        }
-
         const btn = document.createElement('span');
         btn.className = 'review-btn';
         btn.innerHTML = '💬';
-        btn.title = 'この行をレビュー';
-        btn.style.display = 'none'; // 最初は隠しておく
+        btn.title = 'この箇所をレビュー';
         
         btn.onclick = function(e) {
             e.stopPropagation();
             openReviewBox(el, e);
         };
-        el.appendChild(btn);
+        
+        // 要素の先頭にボタンを挿入
+        el.style.position = 'relative'; // CSSでも設定しているが念のため
+        el.prepend(btn);
     });
 
     // 2. トグルスイッチのイベント
     toggle.addEventListener('change', function() {
         if (this.checked) {
             document.body.classList.add('review-mode');
-            // 明示的にボタンを表示
-            document.querySelectorAll('.review-btn').forEach(b => b.style.display = 'inline-block');
         } else {
             document.body.classList.remove('review-mode');
-            document.querySelectorAll('.review-btn').forEach(b => b.style.display = 'none');
             closeReview();
         }
     });
@@ -56,13 +40,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function openReviewBox(el, e) {
     selectedElement = el;
     const box = document.getElementById('review-box');
-    const quote = el.innerText.replace('💬', '').trim();
+    // ボタンの記号(💬)を除いたテキストを取得
+    const fullText = el.innerText || "";
+    const quote = fullText.replace('💬', '').trim();
     
     document.getElementById('review-quote').innerText = quote.length > 100 ? quote.substring(0, 100) + "..." : quote;
     
     box.style.display = 'block';
     
-    const boxWidth = 320;
+    // ポップアップをマウス位置に表示
+    const boxWidth = 340;
     let left = e.pageX;
     if (left + boxWidth > window.innerWidth) {
         left = window.innerWidth - boxWidth - 20;
@@ -74,15 +61,19 @@ function openReviewBox(el, e) {
 }
 
 function closeReview() {
-    document.getElementById('review-box').style.display = 'none';
-    document.getElementById('review-text').value = '';
+    const box = document.getElementById('review-box');
+    if (box) {
+        box.style.display = 'none';
+        document.getElementById('review-text').value = '';
+    }
 }
 
 function submitReview() {
     const line = selectedElement.getAttribute('data-line');
     const path = selectedElement.getAttribute('data-path');
     const comment = document.getElementById('review-text').value;
-    const quote = selectedElement.innerText.replace('💬', '').trim();
+    const fullText = selectedElement.innerText || "";
+    const quote = fullText.replace('💬', '').trim();
     const repoUrl = window.siteConfig.repository_url;
 
     if (!comment.trim()) {
@@ -103,6 +94,7 @@ function submitReview() {
     closeReview();
 }
 
+// ボックス外クリックで閉じる
 document.addEventListener('click', function(e) {
     const box = document.getElementById('review-box');
     if (box && box.style.display === 'block' && !box.contains(e.target) && !e.target.classList.contains('review-btn')) {

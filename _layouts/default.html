@@ -7,96 +7,86 @@
     <title>{{ page.title }} | {{ site.title }}</title>
     <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/style.css">
     <style>
-        /* レビュー用ボタンのスタイル */
+        /* コンテンツエリアの基本設定 */
+        #content-area { position: relative; }
+        
+        /* レビュー対象要素にマージンを作ってボタンのスペースを確保 */
+        .reviewable { 
+            position: relative; 
+            transition: background 0.2s;
+        }
+
+        /* レビュー用ボタンのスタイル（左側の余白に浮かせる） */
         .review-btn {
-            display: none; /* デフォルトは非表示 */
-            margin-left: 10px;
+            display: none; 
+            position: absolute;
+            left: -40px; 
+            top: 0;
             cursor: pointer;
-            font-size: 14px;
-            background: #f0f0f0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 0 5px;
-            vertical-align: middle;
-            color: #666;
+            font-size: 20px;
+            background: white;
+            border: 1px solid #0969da;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            text-align: center;
+            line-height: 32px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
             user-select: none;
         }
-        .review-btn:hover { background: #e0e0e0; color: #333; }
+        .review-btn:hover { transform: scale(1.2); background: #f0faff; }
 
-        /* レビューモード有効時のスタイル */
-        body.review-mode .review-btn { display: inline-block; }
-        body.review-mode [data-line]:hover { background-color: rgba(255, 255, 0, 0.1); }
+        /* レビューモード有効時のみボタンを表示 */
+        body.review-mode .review-btn { display: block; }
+        body.review-mode .reviewable:hover { background-color: rgba(9, 105, 218, 0.05); }
 
-        /* トグルスイッチのスタイル */
+        /* トグルスイッチ（右上に固定） */
         .mode-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 10px 15px;
-            border-radius: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: bold;
-            font-size: 14px;
+            position: fixed; top: 20px; right: 20px;
+            background: white; padding: 10px 20px; border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 2000;
+            display: flex; align-items: center; gap: 12px; font-family: sans-serif;
         }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-        }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 20px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
         }
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px; width: 14px;
-            left: 3px; bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { background-color: #2ea44f; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* レビューボックス（ポップアップ） */
+        /* ポップアップ */
         #review-box {
             display: none; position: absolute; z-index: 3000;
-            background: white; border: 1px solid #ccc; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); padding: 15px; width: 320px;
+            background: white; border: 1px solid #ccc; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15); padding: 20px; width: 340px;
         }
-        #review-box textarea { width: 100%; height: 100px; margin-bottom: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        #review-box textarea { width: 100%; height: 120px; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical; }
         .buttons { display: flex; justify-content: flex-end; gap: 10px; }
-        .btn { padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .btn-cancel { background: #f6f8fa; border: 1px solid #d0d7de; }
-        .btn-primary { background: #2ea44f; color: white; border: 1px solid rgba(27,31,35,0.15); }
-        #review-quote { font-size: 0.85em; color: #555; margin-bottom: 10px; border-left: 4px solid #0969da; padding-left: 10px; font-style: italic; max-height: 60px; overflow: hidden; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; }
+        .btn-cancel { background: #eee; }
+        .btn-primary { background: #2ea44f; color: white; }
+        #review-quote { font-size: 0.9em; color: #666; border-left: 4px solid #0969da; padding-left: 12px; font-style: italic; }
     </style>
 </head>
 <body>
-    <!-- モード切り替えトグル -->
     <div class="mode-toggle">
-        <span>Review Mode</span>
+        <span style="font-size: 14px; font-weight: bold; color: #444;">Review Mode</span>
         <label class="switch">
             <input type="checkbox" id="review-mode-checkbox">
             <span class="slider"></span>
         </label>
     </div>
 
-    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-        <header style="border-bottom: 1px solid #eee; margin-bottom: 20px;">
-            <h1><a href="{{ '/' | relative_url }}" style="text-decoration: none; color: #333;">{{ site.title }}</a></h1>
+    <div style="max-width: 800px; margin: 0 auto; padding: 40px 20px 20px 60px;">
+        <header style="margin-bottom: 40px;">
+            <h1><a href="{{ site.baseurl }}/" style="text-decoration: none; color: #24292f;">{{ site.title }}</a></h1>
         </header>
         
         <article id="content-area">
@@ -104,10 +94,9 @@
         </article>
     </div>
 
-    <!-- レビューポップアップ -->
     <div id="review-box">
         <div id="review-quote"></div>
-        <textarea id="review-text" placeholder="指摘内容を入力..."></textarea>
+        <textarea id="review-text" placeholder="指摘内容を入力してください..."></textarea>
         <div class="buttons">
             <button class="btn btn-cancel" onclick="closeReview()">キャンセル</button>
             <button class="btn btn-primary" onclick="submitReview()">Issueを作成</button>
