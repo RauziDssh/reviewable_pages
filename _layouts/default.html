@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title }} | {{ site.title }}</title>
-    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    <!-- 絶対パスとrelative_urlを組み合わせて確実に読み込む -->
+    <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/style.css">
     <style>
         [data-line] { cursor: pointer; position: relative; transition: background-color 0.2s; }
         [data-line]:hover { background-color: rgba(255, 255, 0, 0.2); }
@@ -53,6 +54,6 @@
             baseurl: "{{ site.baseurl }}"
         };
     </script>
-    <script src="{{ '/assets/js/reviewer.js' | relative_url }}"></script>
+    <script src="{{ site.baseurl }}/assets/js/reviewer.js"></script>
 </body>
 </html>
