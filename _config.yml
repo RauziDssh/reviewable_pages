@@ -4,6 +4,7 @@ title: "Jekyll Review System"
 # サイトのURL設定（GitHub Pages用）
 url: "https://rauzidssh.github.io"
 baseurl: "/reviewable_pages"
+encoding: utf-8
 
 # GitHub Issue生成用のリポジトリURL（大文字小文字をリポジトリに合わせました）
 repository_url: "https://github.com/RauziDssh/reviewable_pages"
