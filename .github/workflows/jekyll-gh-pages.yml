@@ -34,6 +34,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Inject Commit SHA
+        run: |
+          echo "commit_sha: ${{ github.sha }}" >> _config.yml
+
       - name: Build with Jekyll
         run: bundle exec jekyll build
         env:

@@ -120,7 +120,8 @@
     <script>
         window.siteConfig = {
             repository_url: "{{ site.repository_url }}",
-            baseurl: "{{ site.baseurl }}"
+            baseurl: "{{ site.baseurl }}",
+            commit_sha: "{{ site.commit_sha | default: 'main' }}"
         };
     </script>
     <script src="{{ site.baseurl }}/assets/js/reviewer.js"></script>

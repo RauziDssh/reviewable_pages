@@ -105,14 +105,15 @@ function submitBatchIssue() {
     }
 
     const repoUrl = window.siteConfig.repository_url;
+    const commitSha = window.siteConfig.commit_sha;
     let body = "## Unified Review Comments\n\n";
 
     lines.sort((a, b) => parseInt(a) - parseInt(b)).forEach(line => {
         const item = lineComments[line];
-        const permalink = `${repoUrl}/blob/main/${item.path}#L${line}`;
+        // パーマリンク形式: repo/blob/SHA/path?plain=1#Lline
+        const permalink = `${repoUrl}/blob/${commitSha}/${item.path}?plain=1#L${line}`;
         
         body += `### Line ${line}\n`;
-        // URLを単独の行に配置することで、GitHub上でコードスニペットが展開される
         body += `${permalink}\n\n`;
         body += `**Quote:**\n> ${item.quote}\n\n`;
         body += `**Feedback:**\n${item.text}\n\n`;
