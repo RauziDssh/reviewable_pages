@@ -112,7 +112,8 @@ function submitBatchIssue() {
         const permalink = `${repoUrl}/blob/main/${item.path}#L${line}`;
         
         body += `### Line ${line}\n`;
-        body += `**Source:** ${permalink}\n`;
+        // URLを単独の行に配置することで、GitHub上でコードスニペットが展開される
+        body += `${permalink}\n\n`;
         body += `**Quote:**\n> ${item.quote}\n\n`;
         body += `**Feedback:**\n${item.text}\n\n`;
         body += `---\n\n`;
